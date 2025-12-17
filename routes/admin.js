@@ -20,6 +20,18 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    // Check database admins
+    const admin = await Admin.findOne({ username });
+    if (admin) {
+      const isValidPassword = await bcrypt.compare(password, admin.password);
+      if (isValidPassword) {
+        return res.json({
+          success: true,
+          message: 'Admin login successful'
+        });
+      }
+    }
+
     res.status(400).json({
       success: false,
       message: 'Invalid credentials'
@@ -106,6 +118,54 @@ router.get('/contacts', async (req, res) => {
   try {
     const contacts = await Contact.find();
     res.json({ success: true, contacts });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// Get all admins
+router.get('/admins', async (req, res) => {
+  try {
+    const admins = await Admin.find().select('-password');
+    res.json({ success: true, admins });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// Add new admin
+router.post('/admins', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    
+    // Check if admin already exists
+    const existingAdmin = await Admin.findOne({ username });
+    if (existingAdmin) {
+      return res.status(400).json({ success: false, message: 'Admin already exists' });
+    }
+    
+    // Hash password
+    const saltRounds = parseInt(process.env.SALT_ROUNDS) || 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    
+    // Create new admin
+    const admin = new Admin({
+      username,
+      password: hashedPassword
+    });
+    
+    await admin.save();
+    res.status(201).json({ success: true, message: 'Admin created successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// Delete admin
+router.delete('/admins/:id', async (req, res) => {
+  try {
+    await Admin.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'Admin deleted successfully' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });
   }
