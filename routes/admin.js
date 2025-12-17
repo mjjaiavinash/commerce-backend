@@ -161,6 +161,29 @@ router.post('/admins', async (req, res) => {
   }
 });
 
+// Update admin
+router.put('/admins/:id', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const updateData = { username };
+    
+    // If password is provided, hash it
+    if (password) {
+      const saltRounds = parseInt(process.env.SALT_ROUNDS) || 10;
+      updateData.password = await bcrypt.hash(password, saltRounds);
+    }
+    
+    const admin = await Admin.findByIdAndUpdate(req.params.id, updateData, { new: true }).select('-password');
+    if (!admin) {
+      return res.status(404).json({ success: false, message: 'Admin not found' });
+    }
+    
+    res.json({ success: true, message: 'Admin updated successfully', admin });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 // Delete admin
 router.delete('/admins/:id', async (req, res) => {
   try {
