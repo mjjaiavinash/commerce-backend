@@ -13,9 +13,12 @@ const connectDB = async () => {
     process.exit(1);
   }
 };
+
 const authRoutes = require('./routes/auth');
 const contactRoutes = require('./routes/contact');
 const adminRoutes = require('./routes/admin');
+const orderRoutes = require('./routes/orders');
+const cartRoutes = require('./routes/cart');
 
 const app = express();
 
@@ -30,6 +33,8 @@ connectDB();
 app.use('/api/auth', authRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/cart', cartRoutes);
 
 // Health check
 app.get('/', (req, res) => {
